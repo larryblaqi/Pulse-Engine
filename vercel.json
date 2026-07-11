@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "functions": {
+    "api/**/*.ts": {
+      "includeFiles": "*_db.json"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -7,7 +12,7 @@
     },
     {
       "source": "/((?!api/).*)",
-      "destination": "/$1"
+      "destination": "/index.html"
     }
   ]
 }

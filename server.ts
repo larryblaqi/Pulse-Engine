@@ -484,7 +484,11 @@ function loadData(file: string, defaultValue: any): any {
   } catch (error) {
     console.error(`Error reading database file ${file}:`, error);
   }
-  fs.writeFileSync(file, JSON.stringify(defaultValue, null, 2), "utf8");
+  try {
+    fs.writeFileSync(file, JSON.stringify(defaultValue, null, 2), "utf8");
+  } catch (writeError: any) {
+    console.warn(`Could not write default data to ${file} (expected on read-only cloud platforms):`, writeError.message);
+  }
   return defaultValue;
 }
 
