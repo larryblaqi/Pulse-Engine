@@ -132,6 +132,28 @@ export function ReaderPanel({
     fetchArticles();
   }, [selectedCategory, refreshTrigger]);
 
+  // Deep-linking support: auto-select article from query params or path on load
+  useEffect(() => {
+    if (articles.length > 0) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlArticle = urlParams.get("article");
+      
+      const pathParts = window.location.pathname.split("/");
+      const newsIndex = pathParts.indexOf("news");
+      const pathArticle = newsIndex !== -1 ? pathParts[newsIndex + 1] : null;
+      
+      const targetSlug = urlArticle || pathArticle;
+      if (targetSlug) {
+        const found = articles.find(
+          (a) => a && (a.slug === targetSlug || a.id === targetSlug)
+        );
+        if (found) {
+          setActiveArticle(found);
+        }
+      }
+    }
+  }, [articles]);
+
   const fetchArticles = async () => {
     setLoading(true);
     try {

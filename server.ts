@@ -2678,6 +2678,91 @@ app.delete("/api/articles/:id/comments/:commentId", (req, res) => {
 });
 
 // ==========================================
+// SERVERLESS OUTCOME-DRIVEN DYNAMIC SHARING PORTS
+// ==========================================
+
+// Serve single article sharing route with rich SEO Open Graph tags
+app.get("/news/:slug", (req, res) => {
+  try {
+    const slug = req.params.slug;
+    let article = articles.find((art) => art && (art.slug === slug || art.id === slug));
+    
+    if (!article) {
+      article = SPECIAL_TRENDING_ARTICLES.find((art) => art && (art.slug === slug || art.id === slug)) as any;
+    }
+
+    // Load index.html to inject SEO metadata
+    let indexPath = path.join(process.cwd(), "index.html");
+    if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+      indexPath = path.join(process.cwd(), "dist", "index.html");
+    }
+
+    if (!fs.existsSync(indexPath)) {
+      // If index.html doesn't exist, search in other paths as fallback
+      const fallbackPaths = [
+        path.join(process.cwd(), "index.html"),
+        path.join(process.cwd(), "dist", "index.html"),
+        path.resolve(__dirname, "index.html"),
+        path.resolve(__dirname, "..", "index.html"),
+        path.resolve(__dirname, "dist", "index.html"),
+        path.resolve(__dirname, "..", "dist", "index.html")
+      ];
+      for (const fp of fallbackPaths) {
+        if (fs.existsSync(fp)) {
+          indexPath = fp;
+          break;
+        }
+      }
+    }
+
+    let html = fs.existsSync(indexPath) 
+      ? fs.readFileSync(indexPath, "utf8")
+      : `<!doctype html><html lang="en"><head><meta charset="UTF-8" /><title>Pulse News</title></head><body><div id="root"></div></body></html>`;
+
+    if (article) {
+      const escapedTitle = article.title.replace(/"/g, "&quot;");
+      const escapedExcerpt = (article.excerpt || "").replace(/"/g, "&quot;");
+      const pageUrl = `https://www.pulsenews.name.ng/news/${article.slug}`;
+      const ogImage = `https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1200&q=80`;
+      
+      const metaTags = `
+        <title>${escapedTitle} | Pulse News</title>
+        <meta name="description" content="${escapedExcerpt}" />
+        <meta property="og:title" content="${escapedTitle}" />
+        <meta property="og:description" content="${escapedExcerpt}" />
+        <meta property="og:image" content="${ogImage}" />
+        <meta property="og:url" content="${pageUrl}" />
+        <meta property="og:type" content="article" />
+        <meta property="og:site_name" content="Pulse News" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="${escapedTitle}" />
+        <meta name="twitter:description" content="${escapedExcerpt}" />
+        <meta name="twitter:image" content="${ogImage}" />
+        <script>
+          // Instantly redirect client-side React App to open the article using query param deep-linking
+          window.location.replace("/?article=${article.slug}");
+        </script>
+      `;
+
+      // Replace default title or insert in head
+      if (html.includes("<title>")) {
+        html = html.replace(/<title>.*?<\/title>/, metaTags);
+      } else {
+        html = html.replace("</head>", `${metaTags}</head>`);
+      }
+    } else {
+      // Fallback redirect to homepage if article is not found
+      html = html.replace("</head>", `<script>window.location.replace("/");</script></head>`);
+    }
+
+    res.send(html);
+  } catch (error) {
+    console.error("Error serving serverless shared article:", error);
+    res.sendFile(path.join(process.cwd(), "dist", "index.html"));
+  }
+});
+
+// ==========================================
 // STATIC ASSET SERVING & ENGINE INIT
 // ==========================================
 
