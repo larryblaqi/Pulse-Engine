@@ -1,8 +1,11 @@
 {
   "version": 2,
   "functions": {
-    "api/**/*.ts": {
-      "includeFiles": "*_db.json"
+    "api/*.ts": {
+      "includeFiles": "*.json"
+    },
+    "api/index.ts": {
+      "includeFiles": "*.json"
     }
   },
   "rewrites": [

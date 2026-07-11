@@ -9,8 +9,27 @@ import { fileURLToPath } from "url";
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+let __filenameVar = "";
+let __dirnameVar = "";
+
+try {
+  // @ts-ignore
+  if (typeof __dirname !== "undefined" && __dirname) {
+    // @ts-ignore
+    __dirnameVar = __dirname;
+    // @ts-ignore
+    __filenameVar = typeof __filename !== "undefined" ? __filename : "";
+  } else {
+    // @ts-ignore
+    __filenameVar = fileURLToPath(import.meta.url);
+    __dirnameVar = path.dirname(__filenameVar);
+  }
+} catch (e) {
+  __dirnameVar = process.cwd();
+}
+
+const __filename = __filenameVar;
+const __dirname = __dirnameVar;
 
 const app = express();
 const PORT = 3000;
@@ -560,7 +579,13 @@ let users = loadData(USERS_FILE, "users_db.json", defaultAdminUser);
 let comments = loadData(COMMENTS_FILE, "comments_db.json", []);
 
 let rawArticles = loadData(ARTICLES_FILE, "articles_db.json", []);
-let articles = rawArticles.map((art: any, index: number) => {
+if (!rawArticles || !Array.isArray(rawArticles)) {
+  console.error("rawArticles is not a valid array! Fallback to []");
+  rawArticles = [];
+}
+let articles = rawArticles
+  .filter((art: any) => art && typeof art === "object" && art.id)
+  .map((art: any, index: number) => {
   if (!art.seoRank) art.seoRank = Math.floor(Math.random() * 5) + 1;
   if (!art.freshnessScore) art.freshnessScore = index === 0 ? 98 : Math.floor(Math.random() * 40) + 40;
   if (!art.lastReviewedAt) art.lastReviewedAt = new Date(Date.now() - (index * 4 + 1) * 24 * 3600000).toISOString();
@@ -721,35 +746,43 @@ app.get("/api/diagnostics", (req, res) => {
 
 // Get all articles (sorted by newest, can filter by category or query)
 app.get("/api/articles", (req, res) => {
-  const { category, search, status } = req.query;
-  let filtered = [...articles];
+  try {
+    const { category, search, status } = req.query;
+    if (!articles || !Array.isArray(articles)) {
+      return res.status(500).json({ error: "Articles database is not initialized or is invalid" });
+    }
+    let filtered = [...articles];
 
-  if (category) {
-    filtered = filtered.filter((art) => art && art.category && (art.category as string).toLowerCase() === (category as string).toLowerCase());
+    if (category) {
+      filtered = filtered.filter((art) => art && art.category && (art.category as string).toLowerCase() === (category as string).toLowerCase());
+    }
+
+    if (search) {
+      const q = (search as string).toLowerCase();
+      filtered = filtered.filter(
+        (art) =>
+          art &&
+          ((art.title && art.title.toLowerCase().includes(q)) ||
+          (art.content && art.content.toLowerCase().includes(q)) ||
+          (art.keywords && art.keywords.some((k: string) => k && k.toLowerCase().includes(q))))
+      );
+    }
+
+    if (status && status !== "all") {
+      filtered = filtered.filter((art) => art && art.status === status);
+    }
+
+    // Sort by createdAt desc
+    filtered.sort((a, b) => {
+      const aTime = a && a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b && b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
+    });
+    res.json(filtered);
+  } catch (error: any) {
+    console.error("Error in GET /api/articles:", error);
+    res.status(500).json({ error: error.message, stack: error.stack });
   }
-
-  if (search) {
-    const q = (search as string).toLowerCase();
-    filtered = filtered.filter(
-      (art) =>
-        art &&
-        ((art.title && art.title.toLowerCase().includes(q)) ||
-        (art.content && art.content.toLowerCase().includes(q)) ||
-        (art.keywords && art.keywords.some((k: string) => k && k.toLowerCase().includes(q))))
-    );
-  }
-
-  if (status && status !== "all") {
-    filtered = filtered.filter((art) => art && art.status === status);
-  }
-
-  // Sort by createdAt desc
-  filtered.sort((a, b) => {
-    const aTime = a && a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const bTime = b && b.createdAt ? new Date(b.createdAt).getTime() : 0;
-    return bTime - aTime;
-  });
-  res.json(filtered);
 });
 
 const SPECIAL_TRENDING_ARTICLES = [
