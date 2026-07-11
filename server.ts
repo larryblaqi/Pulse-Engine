@@ -70,11 +70,29 @@ async function callClaudeAPI(systemInstruction: string, prompt: string, apiKey: 
   }
 }
 
+// Helper to find DB file in various environments (local vs serverless)
+function findDbFile(filename: string): string {
+  const paths = [
+    path.join(process.cwd(), filename),
+    path.join(process.cwd(), "api", filename),
+    path.resolve(__dirname, filename),
+    path.resolve(__dirname, "..", filename)
+  ];
+  for (const p of paths) {
+    try {
+      if (fs.existsSync(p)) {
+        return p;
+      }
+    } catch (e) {}
+  }
+  return path.join(process.cwd(), filename);
+}
+
 // Databases setup
-const ARTICLES_FILE = path.join(process.cwd(), "articles_db.json");
-const LEADS_FILE = path.join(process.cwd(), "leads_db.json");
-const USERS_FILE = path.join(process.cwd(), "users_db.json");
-const COMMENTS_FILE = path.join(process.cwd(), "comments_db.json");
+const ARTICLES_FILE = findDbFile("articles_db.json");
+const LEADS_FILE = findDbFile("leads_db.json");
+const USERS_FILE = findDbFile("users_db.json");
+const COMMENTS_FILE = findDbFile("comments_db.json");
 
 // Core Categories List (matching Category enum in types.ts)
 const CATEGORIES = [
