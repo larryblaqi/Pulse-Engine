@@ -5,6 +5,10 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
+import INITIAL_ARTICLES_JSON from "./articles_db.json";
+import INITIAL_USERS_JSON from "./users_db.json";
+import INITIAL_COMMENTS_JSON from "./comments_db.json";
+import INITIAL_LEADS_JSON from "./leads_db.json";
 
 dotenv.config();
 
@@ -520,20 +524,10 @@ function saveData(file: string, data: any): void {
 }
 
 // Load databases on startup
-let users = loadData(USERS_FILE, [
-  {
-    id: "admin",
-    name: "Pulse Admin",
-    email: "admin@digitalsage.com",
-    password: "sage-authority-2026",
-    subscribed: false,
-    isAdmin: true,
-    createdAt: new Date().toISOString()
-  }
-]);
-let comments = loadData(COMMENTS_FILE, []);
+let users = loadData(USERS_FILE, INITIAL_USERS_JSON);
+let comments = loadData(COMMENTS_FILE, INITIAL_COMMENTS_JSON);
 
-let rawArticles = loadData(ARTICLES_FILE, INITIAL_ARTICLES);
+let rawArticles = loadData(ARTICLES_FILE, INITIAL_ARTICLES_JSON);
 let articles = rawArticles.map((art: any, index: number) => {
   if (!art.seoRank) art.seoRank = Math.floor(Math.random() * 5) + 1;
   if (!art.freshnessScore) art.freshnessScore = index === 0 ? 98 : Math.floor(Math.random() * 40) + 40;
@@ -570,7 +564,7 @@ let articles = rawArticles.map((art: any, index: number) => {
   }
   return art;
 });
-let leads = loadData(LEADS_FILE, []);
+let leads = loadData(LEADS_FILE, INITIAL_LEADS_JSON);
 
 // Simulated performance stats for SEO Intelligence Layer
 const generateSEOStats = () => {
