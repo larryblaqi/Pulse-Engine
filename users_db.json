@@ -1,0 +1,11 @@
+[
+  {
+    "id": "admin",
+    "name": "Pulse Admin",
+    "email": "admin@digitalsage.com",
+    "password": "sage-authority-2026",
+    "subscribed": false,
+    "isAdmin": true,
+    "createdAt": "2026-07-11T12:11:06.077Z"
+  }
+]

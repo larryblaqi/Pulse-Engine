@@ -1,0 +1,6 @@
+{
+  "name": "Pulse AI",
+  "description": "Authority SEO catalog for Zapii, the leading AI-powered Jumia and Alibaba style import-export marketplace, designed and launched by Digital Sage software services agency.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,160 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@variant dark (.dark &);
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Lora", Georgia, ui-serif, serif;
+  --font-mono: ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: #09090b; /* Default to dark theme */
+    color: #f4f4f5;
+    transition: background-color 0.2s ease, color 0.15s ease;
+  }
+
+  .light-theme body,
+  body.light-theme {
+    background-color: #f4f4f7;
+    color: #1a1a1e;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+  }
+}
+
+/* Fluid clean fades for tab routing */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Light Mode Core Colors and Overrides */
+.light-theme {
+  background-color: #f4f4f7 !important;
+  color: #1a1a1e !important;
+}
+
+/* Legible typography for Prose elements in Light Mode */
+.light-theme .prose {
+  color: #27272a !important;
+}
+.light-theme .prose h1,
+.light-theme .prose h2,
+.light-theme .prose h3,
+.light-theme .prose h4,
+.light-theme .prose strong {
+  color: #09090b !important;
+}
+
+/* Convert dark containers into clean white elevation blocks in light theme */
+.light-theme .bg-zinc-950,
+.light-theme .bg-zinc-905,
+.light-theme .bg-zinc-900,
+.light-theme .bg-zinc-910,
+.light-theme .bg-zinc-920,
+.light-theme .bg-zinc-950\/50,
+.light-theme .bg-zinc-950\/70,
+.light-theme .bg-zinc-950\/40,
+.light-theme .bg-zinc-900\/50,
+.light-theme .bg-zinc-900\/60,
+.light-theme .bg-zinc-900\/40,
+.light-theme .bg-zinc-900\/30,
+.light-theme .bg-zinc-900\/20,
+.light-theme .bg-zinc-900\/10,
+.light-theme .bg-\[\#09090b\],
+.light-theme .bg-\[\#1c1c20\],
+.light-theme .bg-\[\#15151a\] {
+  background-color: #ffffff !important;
+}
+
+/* Light theme borders - subtle high-contrast thin boundaries */
+.light-theme .border-white\/5,
+.light-theme .border-white\/10,
+.light-theme .border-white\/15,
+.light-theme .border-zinc-800,
+.light-theme .border-zinc-900,
+.light-theme .border-zinc-900\/60,
+.light-theme .border-zinc-800\/80,
+.light-theme .border-zinc-900\/30 {
+  border-color: rgba(9, 9, 11, 0.08) !important;
+}
+
+/* Ensure texts are dark and perfectly readable */
+.light-theme .text-white,
+.light-theme .text-zinc-100,
+.light-theme .text-zinc-200,
+.light-theme .text-zinc-300 {
+  color: #09090b !important;
+}
+
+.light-theme .text-zinc-400,
+.light-theme .text-zinc-500 {
+  color: #52525b !important; /* Neutral high-contrast gray */
+}
+
+.light-theme .text-zinc-600,
+.light-theme .text-zinc-700,
+.light-theme .text-zinc-800 {
+  color: #18181b !important; /* Extreme readability dark dark charcoal */
+}
+
+/* Preset dynamic keywords pills */
+.light-theme .bg-red-950 {
+  background-color: rgba(220, 38, 38, 0.06) !important;
+  color: #dc2626 !important;
+}
+
+.light-theme .border-red-900\/50,
+.light-theme .border-red-900\/30,
+.light-theme .border-red-800\/85,
+.light-theme .border-red-500\/30,
+.light-theme .border-red-500\/40 {
+  border-color: rgba(220, 38, 38, 0.18) !important;
+}
+
+.light-theme header {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border-bottom-color: rgba(9, 9, 11, 0.08) !important;
+}
+
+.light-theme footer {
+  background-color: #ffffff !important;
+  border-top-color: rgba(9, 9, 11, 0.08) !important;
+  color: #52525b !important;
+}
+
+.light-theme input,
+.light-theme select,
+.light-theme textarea {
+  background-color: #ffffff !important;
+  color: #09090b !important;
+  border-color: rgba(9, 9, 11, 0.15) !important;
+}
+
+.light-theme select option {
+  background-color: #ffffff !important;
+  color: #09090b !important;
+}
+
+.light-theme input::placeholder,
+.light-theme textarea::placeholder {
+  color: #71717a !important;
+}
+
+
