@@ -5,10 +5,6 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
-import INITIAL_ARTICLES_JSON from "./articles_db.json";
-import INITIAL_USERS_JSON from "./users_db.json";
-import INITIAL_COMMENTS_JSON from "./comments_db.json";
-import INITIAL_LEADS_JSON from "./leads_db.json";
 
 dotenv.config();
 
@@ -497,21 +493,41 @@ Need a website, mobile app, AI solution, automation system, or custom software f
 ];
 
 // Helper to load files
-function loadData(file: string, defaultValue: any): any {
+function loadData(file: string, fallbackFileName: string, absoluteFallbackDefault?: any): any {
   try {
     if (fs.existsSync(file)) {
       const content = fs.readFileSync(file, "utf8");
-      return JSON.parse(content);
+      if (content.trim()) {
+        return JSON.parse(content);
+      }
     }
   } catch (error) {
     console.error(`Error reading database file ${file}:`, error);
   }
+
+  // Fallback to reading the direct local file from the repo (relative to project root/CWD or __dirname)
   try {
-    fs.writeFileSync(file, JSON.stringify(defaultValue, null, 2), "utf8");
-  } catch (writeError: any) {
-    console.warn(`Could not write default data to ${file} (expected on read-only cloud platforms):`, writeError.message);
+    const fallbackPaths = [
+      path.join(process.cwd(), fallbackFileName),
+      path.join(process.cwd(), "api", fallbackFileName),
+      path.resolve(__dirname, fallbackFileName),
+      path.resolve(__dirname, "..", fallbackFileName)
+    ];
+    for (const p of fallbackPaths) {
+      try {
+        if (fs.existsSync(p)) {
+          const content = fs.readFileSync(p, "utf8");
+          if (content.trim()) {
+            return JSON.parse(content);
+          }
+        }
+      } catch (e) {}
+    }
+  } catch (fallbackError) {
+    console.error(`Fallback reading failed for ${fallbackFileName}:`, fallbackError);
   }
-  return defaultValue;
+
+  return absoluteFallbackDefault || [];
 }
 
 // Helper to save files
@@ -524,10 +540,22 @@ function saveData(file: string, data: any): void {
 }
 
 // Load databases on startup
-let users = loadData(USERS_FILE, INITIAL_USERS_JSON);
-let comments = loadData(COMMENTS_FILE, INITIAL_COMMENTS_JSON);
+const defaultAdminUser = [
+  {
+    id: "admin",
+    name: "Pulse Admin",
+    email: "admin@digitalsage.com",
+    password: "sage-authority-2026",
+    subscribed: false,
+    isAdmin: true,
+    createdAt: new Date().toISOString()
+  }
+];
 
-let rawArticles = loadData(ARTICLES_FILE, INITIAL_ARTICLES_JSON);
+let users = loadData(USERS_FILE, "users_db.json", defaultAdminUser);
+let comments = loadData(COMMENTS_FILE, "comments_db.json", []);
+
+let rawArticles = loadData(ARTICLES_FILE, "articles_db.json", []);
 let articles = rawArticles.map((art: any, index: number) => {
   if (!art.seoRank) art.seoRank = Math.floor(Math.random() * 5) + 1;
   if (!art.freshnessScore) art.freshnessScore = index === 0 ? 98 : Math.floor(Math.random() * 40) + 40;
@@ -564,7 +592,7 @@ let articles = rawArticles.map((art: any, index: number) => {
   }
   return art;
 });
-let leads = loadData(LEADS_FILE, INITIAL_LEADS_JSON);
+let leads = loadData(LEADS_FILE, "leads_db.json", []);
 
 // Simulated performance stats for SEO Intelligence Layer
 const generateSEOStats = () => {
@@ -643,6 +671,49 @@ const generateSEOStats = () => {
 // ==========================================
 // API ROUTES
 // ==========================================
+
+// Diagnostics endpoint to verify file loading in read-only serverless cloud runs
+app.get("/api/diagnostics", (req, res) => {
+  const diagnostics: any = {
+    cwd: process.cwd(),
+    dirname: __dirname,
+    env: process.env.NODE_ENV,
+    files: {},
+    articlesLength: typeof articles !== "undefined" ? articles.length : "undefined",
+    rawArticlesLength: typeof rawArticles !== "undefined" ? (Array.isArray(rawArticles) ? rawArticles.length : typeof rawArticles) : "undefined",
+    errors: []
+  };
+
+  const dbFiles = {
+    articles: ARTICLES_FILE,
+    users: USERS_FILE,
+    comments: COMMENTS_FILE,
+    leads: LEADS_FILE
+  };
+
+  for (const [key, filePath] of Object.entries(dbFiles)) {
+    diagnostics.files[key] = {
+      path: filePath,
+      exists: false,
+      size: 0,
+      readable: false
+    };
+    try {
+      if (fs.existsSync(filePath)) {
+        diagnostics.files[key].exists = true;
+        const stats = fs.statSync(filePath);
+        diagnostics.files[key].size = stats.size;
+        const content = fs.readFileSync(filePath, "utf8");
+        diagnostics.files[key].readable = true;
+        diagnostics.files[key].first30Chars = content.substring(0, 30);
+      }
+    } catch (err: any) {
+      diagnostics.errors.push(`Error for ${key}: ${err.message}`);
+    }
+  }
+
+  res.json(diagnostics);
+});
 
 // Get all articles (sorted by newest, can filter by category or query)
 app.get("/api/articles", (req, res) => {
